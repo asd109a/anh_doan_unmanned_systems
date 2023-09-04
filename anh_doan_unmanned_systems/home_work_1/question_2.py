@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 30 19:00:48 2023
 
-@author: DCM82X
-"""
 
 class Node:
     def __init__(self, x, y, parent_cost, index):
