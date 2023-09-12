@@ -191,7 +191,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 print("The list of waypoints for the desired path:", wp_list)
-print("Cost:", current_node.cost)
+print(f"the cost is  {current_node.cost:.2f}")
 
 
 
