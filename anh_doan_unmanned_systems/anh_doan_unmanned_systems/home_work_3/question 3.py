@@ -32,48 +32,38 @@ def is_collision(point, obstacles):
             return True
     return False
 
-# Define a node class to store points and parent information
+# Function to find the nearest point in the RRT to a given point
 
 
-class Node:
-    def __init__(self, point, parent=None):
-        self.point = point
-        self.parent = parent
+def nearest_point(rrt, point):
+    return min(rrt, key=lambda x: np.sqrt((x[0] - point[0])**2 + (x[1] - point[1])**2))
 
 
 # Initialize the RRT with the start point
-rrt = [Node(start)]
+rrt = [start]
 
 for _ in range(max_iterations):
     # Randomly sample a point in the workspace
     random_point = (random.uniform(x_min, x_max), random.uniform(y_min, y_max))
 
     # Find the nearest point in the RRT to the random point
-    nearest_node = min(rrt, key=lambda node: np.sqrt(
-        (node.point[0] - random_point[0])**2 + (node.point[1] - random_point[1])**2))
+    nearest = nearest_point(rrt, random_point)
 
     # Extend the tree from the nearest point towards the random point
-    theta = np.arctan2(
-        random_point[1] - nearest_node.point[1], random_point[0] - nearest_node.point[0])
-    new_point = (nearest_node.point[0] + step_size * np.cos(theta),
-                 nearest_node.point[1] + step_size * np.sin(theta))
+    theta = np.arctan2(random_point[1] - nearest[1],
+                       random_point[0] - nearest[0])
+    new_point = (nearest[0] + step_size * np.cos(theta),
+                 nearest[1] + step_size * np.sin(theta))
 
     # Check for collisions with obstacles
     if not is_collision(new_point, obstacle_positions):
-        rrt.append(Node(new_point, parent=nearest_node))
+        rrt.append(new_point)
 
 # Find the path from the goal to the nearest point in the RRT
 path = [goal]
-nearest_to_goal = min(rrt, key=lambda node: np.sqrt(
-    (node.point[0] - goal[0])**2 + (node.point[1] - goal[1])**2))
 while path[-1] != start:
-    for node in rrt:
-        if np.sqrt((node.point[0] - path[-1][0])**2 + (node.point[1] - path[-1][1])**2) < step_size and node.point != path[-1]:
-            path.append(node.point)
-            break
-
-# Extract the x and y coordinates from the path
-path_x, path_y = zip(*path)
+    nearest = nearest_point(rrt, path[-1])
+    path.append(nearest)
 
 # Plot the workspace, obstacles, RRT, and path
 plt.figure(figsize=(10, 10))
@@ -88,13 +78,12 @@ for obstacle in obstacle_positions:
     plt.gca().add_patch(circle)
 
 # Plot RRT
-for node in rrt:
-    if node.parent:
-        plt.plot([node.point[0], node.parent.point[0]], [
-                 node.point[1], node.parent.point[1]], color='blue')
+for i in range(1, len(rrt)):
+    plt.plot([rrt[i-1][0], rrt[i][0]], [rrt[i-1][1], rrt[i][1]], color='blue')
 
 # Plot path
-plt.plot(path_x, path_y, color='green', linewidth=2)
+path_x, path_y = zip(*path)
+plt.plot(path_x, path_y, color='green', linewidth=2, label='Path')
 
 # Plot start and goal
 plt.scatter(start[0], start[1], color='green', marker='o', label='Start')
